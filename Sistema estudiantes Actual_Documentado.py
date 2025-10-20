@@ -4,7 +4,6 @@ import os
 # Ruta base donde se guardarán todos los archivos CSV
 RUTA_BASE_CSV = r"C:\Users\dafet\Desktop\Proyecto Poo"
 
-
 # ============================================================
 # CLASE GESTORCSV
 # Encargada de manejar toda la lectura y escritura en archivos CSV
@@ -220,20 +219,24 @@ class Docente(Persona):
 
 class Materia:
     def __init__(self):
-        self.lista_docentes = []       # Lista recibida desde la clase Docente
-        self.materias_asignadas = []   # Guarda las relaciones docente-materia
+        self.lista_docentes = []        # Lista recibida desde la clase Docente
+        self.lista_estudiantes = []     # Lista recibida desde la clase Estudiante
+        self.materias_asignadas = []    # Guarda relaciones docente-materia
+        self.materias_estudiantes = []  # Guarda relaciones estudiante-materia
 
-    # Recibe la lista de docentes desde otra clase
-    def recibir_docentes(self, lista):
-        self.lista_docentes = lista
+    # Recibir listas desde otras clases
+    def recibir_docentes(self, lista_docentes):
+        self.lista_docentes = lista_docentes
 
-    # Permite asignar una materia a un docente ya registrado
+    def recibir_estudiantes(self, lista_estudiantes):
+        self.lista_estudiantes = lista_estudiantes
+
+    # Asignar materia a un docente
     def inscribir_materia_docente(self):
         if not self.lista_docentes:
             print("\n No hay docentes registrados aún. Agrega docentes antes de inscribir materias.\n")
             return
 
-        # Muestra la lista de docentes disponibles
         print("\n Lista de docentes disponibles:\n")
         for docente in self.lista_docentes:
             print(f"ID: {docente[0]} - Nombre: {docente[1]} - Email: {docente[4]}")
@@ -243,30 +246,91 @@ class Materia:
 
         docente_encontrado = None
 
-        # Busca al docente por su ID
         for docente in self.lista_docentes:
             if docente[0] == id_docente:
                 docente_encontrado = docente
                 break
 
-        # Si no se encuentra, se detiene el proceso
         if not docente_encontrado:
             print(f"No se encontró el docente con el id: {id_docente}")
             return
 
-        # Pide el nombre de la materia a asignar
         nombre_materia = input("Digite el nombre de la materia: ")
 
-        # Crea el registro de inscripción
         inscripcion_materias = [docente_encontrado[0], docente_encontrado[1], nombre_materia]
         self.materias_asignadas.append(inscripcion_materias)
 
-        print(f"\nLa materia '{nombre_materia}' ha sido asignada correctamente al docente con id: {docente_encontrado[1]}.\n")
+        print(f"\nLa materia '{nombre_materia}' ha sido asignada correctamente al docente: {docente_encontrado[1]} (ID: {docente_encontrado[0]}).\n")
 
-        # Muestra todas las materias asignadas
-        print("Listado de materias asignadas:\n")
+        print("Listado de materias asignadas a docentes:\n")
         for m in self.materias_asignadas:
             print(f"Docente: {m[1]} - Materia: {m[2]}")
+
+        # Guarda los datos en un archivo CSV
+        encabezados = ["Id", "Nombre", "Materia"]
+        GestorCSV.añadir_datos_csv(
+            nombre_archivo="inscribir_materia_docente.csv", 
+            encabezados=encabezados, 
+            datos=self.materias_asignadas
+        )
+
+    # Inscribir estudiante en una materia
+    def inscribir_estudiante_materia(self):
+        if not self.lista_estudiantes:
+            print("\n No hay estudiantes registrados aún. Agrega estudiantes antes de inscribirlos en materias.\n")
+            return
+
+        if not self.materias_asignadas:
+            print("\n No hay materias disponibles aún. Asigna materias a docentes antes de inscribir estudiantes.\n")
+            return
+
+        print("\n Lista de estudiantes disponibles:\n")
+        for estudiante in self.lista_estudiantes:
+            print(f"ID: {estudiante[0]} - Nombre: {estudiante[1]} - Email: {estudiante[4]}")
+
+        id_estudiante = input("\nDigite el id del estudiante que desea inscribir: ")
+        estudiante_encontrado = None
+
+        for estudiante in self.lista_estudiantes:
+            if estudiante[0] == id_estudiante:
+                estudiante_encontrado = estudiante
+                break
+
+        if not estudiante_encontrado:
+            print(f"No se encontró el estudiante con el id: {id_estudiante}")
+            return
+
+        print("\n Materias disponibles:\n")
+        for m in self.materias_asignadas:
+            print(f"{m[2]} - Docente: {m[1]} (ID: {m[0]})")
+
+        nombre_materia = input("\nDigite el nombre de la materia a la que desea inscribir al estudiante: ")
+
+        materia_encontrada = None
+        for m in self.materias_asignadas:
+            if m[2].lower() == nombre_materia.lower():
+                materia_encontrada = m
+                break
+
+        if not materia_encontrada:
+            print(f"No se encontró la materia '{nombre_materia}'.")
+            return
+
+        inscripcion_estudiante = [estudiante_encontrado[0], estudiante_encontrado[1], materia_encontrada[2]]
+        self.materias_estudiantes.append(inscripcion_estudiante)
+
+        print(f"\nEl estudiante '{estudiante_encontrado[1]}' ha sido inscrito correctamente en la materia '{materia_encontrada[2]}'.\n")
+
+        print("Listado de inscripciones de estudiantes:\n")
+        for ins in self.materias_estudiantes:
+            print(f"Estudiante: {ins[1]} - Materia: {ins[2]}")
+        # Guarda los datos en un archivo CSV
+        encabezados = ["Id", "Nombre", "Materia"]
+        GestorCSV.añadir_datos_csv(
+            nombre_archivo="inscribir_materia_estudiante.csv", 
+            encabezados=encabezados, 
+            datos=self.materias_estudiantes
+        )
 
 
 # ============================================================
@@ -369,31 +433,32 @@ actividad1 = Actividad()
 while True:
     print("\n--- MENÚ ---")
     print("1. Agregar estudiante")
-    print("2. Agregar Docente")
-    print("3. Inscribir Materia")
-    print("4. Agregar Actividad")
-    print("5. Salir")
+    print("2. Agregar docente")
+    print("3. Inscribir materia (docente)")
+    print("4. Inscribir estudiante en materia")
+    print("5. Agregar actividad")
+    print("6. Salir")
 
     opcion = input("Seleccione una opción: ")
 
-    # Valida que se ingrese algo
+    # Validación: entrada vacía
     if opcion == "":
         print("\n Debes ingresar una opción.")
         continue
 
-    # Valida que sea un número entero
+    # Validación: número entero
     try:
         opcion = int(opcion)
     except ValueError:
         print("\n Por favor ingrese un número válido.")
         continue
 
-    # Valida que esté dentro del rango del menú
-    if opcion < 1 or opcion > 5:
+    # Validación: rango correcto
+    if opcion < 1 or opcion > 6:
         print("\n Opción fuera de rango. Intente nuevamente.")
         continue
 
-    # Ejecuta la opción seleccionada
+    # --- Ejecución de opciones ---
     if opcion == 1:
         estudiante1.agregar_estudiante()
 
@@ -401,7 +466,7 @@ while True:
         docente1.agregar_docente()
 
     elif opcion == 3:
-        # Verifica si hay docentes registrados antes de asignar materia
+        # Verifica si hay docentes antes de asignar materias
         if not docente1.obtener_docentes():
             print("\n Primero debes agregar docentes antes de inscribir materias.\n")
         else:
@@ -409,12 +474,16 @@ while True:
             materia1.inscribir_materia_docente()
 
     elif opcion == 4:
-        actividad1.agregar_actividad()
-
+        # Verifica si hay estudiantes y materias antes de inscribir
+        if not estudiante1.obtener_estudiantes():
+            print("\n Primero debes agregar estudiantes antes de inscribirlos en materias.\n")
+        elif not materia1.materias_asignadas:
+            print("\n No hay materias disponibles aún. Asigna materias a docentes primero.\n")
+        else:
+            materia1.recibir_estudiantes(estudiante1.obtener_estudiantes())
+            materia1.inscribir_estudiante_materia()
     elif opcion == 5:
+        actividad1.agregar_actividad()
+    elif opcion == 6:
         print("\n Saliendo del programa...")
         break
-
-#tilin
-
-#tilin prueba 2
