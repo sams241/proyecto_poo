@@ -331,7 +331,8 @@ class Materia:
             encabezados=encabezados, 
             datos=self.materias_estudiantes
         )
-
+    def obtener_materia_estudiantes(self):
+        return self.materias_estudiantes
 
 # ============================================================
 # CLASE ACTIVIDAD
@@ -377,31 +378,17 @@ class Actividad:
             while not id_actividad:
                 id_actividad = input("El ID no puede estar vacío: ").strip()
 
-            nombre_actividad = input("Nombre de la actividad: ").strip()
-            while not nombre_actividad:
-                nombre_actividad = input("El nombre no puede estar vacío: ").strip()
-
-            tipo_actividad = input("Tipo de actividad (Tarea, Examen, Taller, Proyecto): ").strip()
+            tipo_actividad = input("Tipo de actividad (Futbol,Lectura,Baile): ").strip()
             while not tipo_actividad:
                 tipo_actividad = input("El tipo no puede estar vacío: ").strip()
 
             descripcion = input("Descripción (opcional): ").strip() or "Sin descripción"
 
-            # Permite ingresar la fecha con o sin /
-            fecha_entrega = input("Fecha de entrega (ddmmaaaa o dd/mm/aaaa): ").strip()
-            if '/' not in fecha_entrega and len(fecha_entrega) == 8:
-                fecha_entrega = f"{fecha_entrega[:2]}/{fecha_entrega[2:4]}/{fecha_entrega[4:]}"
-
-            while not fecha_entrega:
-                fecha_entrega = input("La fecha no puede estar vacía: ").strip()
-
             # Guarda la actividad asociada a la persona
             self.actividades.append([
                 id_actividad,
-                nombre_actividad,
                 tipo_actividad,
                 descripcion,
-                fecha_entrega,
                 id_persona,
                 nombre_persona,
                 email_persona
@@ -410,14 +397,149 @@ class Actividad:
         # Muestra en pantalla todas las actividades registradas
         print("\nACTIVIDADES REGISTRADAS:")
         for act in self.actividades:
-            print(f"Actividad: {act[1]} -- Tipo: {act[2]} -- Persona: {act[6]}")
+            print(f"Actividad: {act[1]} -- Tipo: {act[2]} -- Persona: {act[4]}")
 
         # Guarda las actividades en un archivo CSV
-        encabezados = [
-            "id_actividad", "Nombre_actividad", "Tipo", "Descripcion",
-            "Fecha_entrega", "id_persona", "Nombre_persona", "Email_persona"
-        ]
-        GestorCSV.añadir_datos_csv("actividades.csv", encabezados, self.actividades)
+        encabezados = ["id_actividad", "tipo_actividad", "descripcion", "id_persona", "nombre_persona", "email_persona"]
+        GestorCSV.añadir_datos_csv(
+            nombre_archivo="actividades.csv", 
+            encabezados=encabezados, 
+            datos=self.actividades
+        )
+
+class Notas:
+    def __init__(self):
+        self.lista_estudiantes_materias = []  # Se recibe desde Materia
+
+    def recibir_estudiantes(self, lista_estudiantes_materias):
+        self.lista_estudiantes_materias = lista_estudiantes_materias
+
+    def agregar_notas_estudiantes(self):
+        if not self.lista_estudiantes_materias:
+            print("\nNo hay estudiantes inscritos en materias.\n")
+            return
+
+        print("\nEstudiantes inscritos en materias disponibles:\n")
+        for registro in self.lista_estudiantes_materias:
+            print(f"ID: {registro[0]} - Nombre: {registro[1]} - Materia: {registro[2]}")
+
+        id_est = input("\nDigite el ID del estudiante: ").strip()
+        materia_nombre = input("Digite el nombre de la materia: ").strip()
+
+        registro_encontrado = None
+        for registro in self.lista_estudiantes_materias:
+            if registro[0] == id_est and registro[2].lower() == materia_nombre.lower():
+                registro_encontrado = registro
+                break
+
+        if not registro_encontrado:
+            print("\nNo se encontró el estudiante en esa materia.")
+            return
+
+        # Pedimos cuántas notas se quieren ingresar
+        while True:
+            try:
+                n = int(input("\n¿Cuántas notas desea agregar? "))
+                if n <= 0:
+                    print("Debe ingresar al menos una nota.")
+                else:
+                    break
+            except ValueError:
+                print("Ingrese un número entero válido.")
+
+        datos_csv = []
+        for i in range(n):
+            while True:
+                try:
+                    valor = float(input(f"Ingrese la nota #{i+1} (0.0 - 5.0): "))
+                    if 0.0 <= valor <= 5.0:
+                        datos_csv.append([registro_encontrado[0], registro_encontrado[1], registro_encontrado[2], valor])
+                        break
+                    print("La nota debe estar entre 0.0 y 5.0.")
+                except ValueError:
+                    print("Ingrese un número decimal válido.")
+
+        # Guardamos en CSV correctamente
+        encabezados = ["ID Estudiante", "Nombre Estudiante", "Materia", "Nota"]
+        GestorCSV.añadir_datos_csv(
+            nombre_archivo="notas.csv",
+            encabezados=encabezados,
+            datos=datos_csv
+        )
+
+        print(f"\nSe agregaron {len(datos_csv)} notas para {registro_encontrado[1]} en {registro_encontrado[2]}.\n")
+
+        return datos_csv
+
+class Asistencia:
+    def __init__(self):
+        self.lista_estudiantes_materias = []  # Se rellena desde Materia
+
+    def recibir_estudiantes(self, lista_estudiantes_materias):
+        self.lista_estudiantes_materias = lista_estudiantes_materias
+
+    def registrar_inasistencias(self):
+        if not self.lista_estudiantes_materias:
+            print("\nNo hay estudiantes inscritos en materias.\n")
+            return
+
+        print("\nEstudiantes inscritos y sus materias:\n")
+        for registro in self.lista_estudiantes_materias:
+            print(f"ID: {registro[0]} - Nombre: {registro[1]} - Materia: {registro[2]}")
+
+        id_est = input("\nDigite el ID del estudiante: ").strip()
+        materia_nombre = input("Digite el nombre de la materia: ").strip()
+
+        registro_encontrado = None
+        for registro in self.lista_estudiantes_materias:
+            if registro[0] == id_est and registro[2].lower() == materia_nombre.lower():
+                registro_encontrado = registro
+                break
+
+        if not registro_encontrado:
+            print("\nNo se encontró el estudiante en esa materia.")
+            return
+
+        while True:
+            try:
+                cantidad = int(input("\n¿Cuántas inasistencias desea registrar? "))
+                if cantidad <= 0:
+                    print("Debe ingresar al menos una fecha.")
+                else:
+                    break
+            except ValueError:
+                print("Ingrese un número entero válido.\n")
+
+        datos_csv = []
+        for i in range(cantidad):
+            while True:
+                fecha = input(f"Ingrese la fecha #{i+1} (dd/mm/aaaa): ").strip()
+
+                partes = fecha.split("/")
+                if len(partes) == 3 and all(p.isdigit() for p in partes):
+                    dia, mes, anio = map(int, partes)
+                    if 1 <= dia <= 31 and 1 <= mes <= 12 and anio >= 2000:
+                        datos_csv.append([
+                            registro_encontrado[0],
+                            registro_encontrado[1],
+                            registro_encontrado[2],
+                            fecha
+                        ])
+                        break
+
+                print("Formato inválido. Intente de nuevo (dd/mm/aaaa).")
+
+        encabezados = ["ID Estudiante", "Nombre Estudiante", "Materia", "Fecha Inasistencia"]
+
+        GestorCSV.añadir_datos_csv(
+            nombre_archivo="asistencias.csv",
+            encabezados=encabezados,
+            datos=datos_csv
+        )
+
+        print(f"\nSe registraron {len(datos_csv)} fechas de inasistencia para {registro_encontrado[1]} en {registro_encontrado[2]}.\n")
+
+        return datos_csv
 
 
 # ============================================================
@@ -429,6 +551,8 @@ docente1 = Docente()
 estudiante1 = Estudiante()
 materia1 = Materia()
 actividad1 = Actividad()
+nota1 = Notas()
+asistencia1 = Asistencia()
 
 while True:
     print("\n--- MENÚ ---")
@@ -437,7 +561,9 @@ while True:
     print("3. Inscribir materia (docente)")
     print("4. Inscribir estudiante en materia")
     print("5. Agregar actividad")
-    print("6. Salir")
+    print("6. Agregar notas a estudiante en materia")
+    print("7. Añadir asistencia a materia")
+    print("8. Salir")
 
     opcion = input("Seleccione una opción: ")
 
@@ -454,7 +580,7 @@ while True:
         continue
 
     # Validación: rango correcto
-    if opcion < 1 or opcion > 6:
+    if opcion < 1 or opcion > 8:
         print("\n Opción fuera de rango. Intente nuevamente.")
         continue
 
@@ -485,5 +611,17 @@ while True:
     elif opcion == 5:
         actividad1.agregar_actividad()
     elif opcion == 6:
+        if not materia1.obtener_materia_estudiantes():
+            print("\n Primero debes agregar estudiantes y materias antes de agregar notas.\n")
+        else:
+            nota1.recibir_estudiantes(materia1.obtener_materia_estudiantes())
+            nota1.agregar_notas_estudiantes()
+    elif opcion ==7:
+        if not materia1.obtener_materia_estudiantes():
+            print("\n Primero debes agregar estudiantes y materias antes de agregar asistencia.\n")
+        else:
+            asistencia1.recibir_estudiantes(materia1.obtener_materia_estudiantes())
+            asistencia1.registrar_inasistencias()
+    elif opcion == 8:
         print("\n Saliendo del programa...")
         break
