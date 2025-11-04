@@ -163,6 +163,14 @@ class Estudiante(Persona):
     # Devuelve la lista actual de estudiantes registrados
     def obtener_estudiantes(self):
         return self.registro
+    
+    #buscar id de persona para sistema de biblioteca
+    def buscar_estudiante(self,id_buscar):
+        for estudiante in self.registro:
+            if estudiante[0] == id_buscar:
+                return estudiante
+        return None
+    
 
 
 # ============================================================
@@ -540,6 +548,62 @@ class Asistencia:
         print(f"\nSe registraron {len(datos_csv)} fechas de inasistencia para {registro_encontrado[1]} en {registro_encontrado[2]}.\n")
 
         return datos_csv
+    
+#Sistema de biblioteca
+    
+class biblioteca:
+
+    def __init__(self):
+        self.lista_libros = [["principito",True],
+                             ["pinocho",True],
+                             ["matilda",True],
+                             ["momo",True],
+                             ["programacion",True],
+                             ["medicina",True],
+                             ["historia",True],
+                             ["ingles",True],
+                             ["calculo",True],
+                             ["videojuegos",True]
+                             ]
+        self.prestamos = []
+
+    def mostrar_libros(self):
+        print("")
+        print("Libro"," Estado")
+        for x in self.lista_libros:
+            estado = "disponible" if x[1] else "Prestado"
+            print("")
+            print(f"{x[0]} {estado}")
+
+
+    def prestar_libros(self,persona,nombre_libro):
+        for x in self.lista_libros:
+            if x[0] == nombre_libro:
+                if x[1]:
+                    x[1] = False
+                    self.prestamos.append([persona[0],nombre_libro])
+                    print(f"{x[0]} prestado a {persona[1]}")
+                    return
+                else:
+                    print(f"el libro {x[0]} no esta disponible")
+                    return
+        print("\nLibro no encontrado")
+
+    def mostrar_prestamos(self):
+        print("\nLista de prestamos")
+        for p in self.prestamos:
+            print(f"Estudiante ID: {p[0]} libro {p[1]}")
+
+    def devolver_libros(self,persona,nombre_libro):
+        for x in self.prestamos:
+            if x[0] == persona[0] and x[1] == nombre_libro:
+                for i in self.lista_libros:
+                    if i[0] == nombre_libro:
+                        i[1] = True
+                        break
+                self.prestamos.remove(x)
+                print(f"{nombre_libro} devuelto por {persona[1]}")
+        print(f"No se encontró un prestamo activo del libro {nombre_libro} para {persona[1]}")
 
 
 # ============================================================
@@ -553,6 +617,7 @@ materia1 = Materia()
 actividad1 = Actividad()
 nota1 = Notas()
 asistencia1 = Asistencia()
+Libros1= biblioteca()
 
 while True:
     print("\n--- MENÚ ---")
@@ -563,7 +628,8 @@ while True:
     print("5. Agregar actividad")
     print("6. Agregar notas a estudiante en materia")
     print("7. Añadir asistencia a materia")
-    print("8. Salir")
+    print("8. Acceder a biblioteca")
+    print("9. Salir")
 
     opcion = input("Seleccione una opción: ")
 
@@ -622,6 +688,61 @@ while True:
         else:
             asistencia1.recibir_estudiantes(materia1.obtener_materia_estudiantes())
             asistencia1.registrar_inasistencias()
+
     elif opcion == 8:
+
+        print("\nBienvenido al sistema de biblioteca")
+
+        # Verifica si hay estudiantes o docentes
+        if not estudiante1.obtener_estudiantes():
+                print("\nPrimero debes agregar un estudiante.\n")
+        
+        
+        else:
+            accion = input("\n¿Que accion deseas hacer?, presiona\n1. Mostrar lista de libros\n2. Prestar libro\n3. Mostrar libros prestados\n4. Devolver un libro\nSelecciona una opcion: ")
+            try:
+                accion = int(accion)
+            except ValueError:
+                print("\nPor favor ingrese un número válido.")
+
+            if accion == 1:
+
+                Libros1.mostrar_libros()
+            
+            elif accion == 2:
+                print("\nPrestamos")
+                id_solicitado = input("\nIngrese su Id: ")
+                nombre_libro = input("\nIngrese el nombre del libro que desea adquirir: ")
+
+                tilin= estudiante1.buscar_estudiante(id_solicitado)
+                
+                if tilin:
+
+                    Libros1.prestar_libros(tilin,nombre_libro)
+
+
+                else:
+
+                    print("\nNo se encontro estudiante con ese id")
+
+            elif accion == 3:
+
+                Libros1.mostrar_prestamos()
+
+            elif accion == 4:
+
+                print("\nDevolucion de libros")
+                id_solicitado = input("\nIngrese su Id: ")
+                nombre_libro = input("\nIngrese el nombre del libro que desea devolver: ")
+                Libros1.devolver_libros(tilin,nombre_libro)
+                
+            
+            else:
+                print("Opcion no valida")
+                
+
+
+
+    elif opcion == 9:
         print("\n Saliendo del programa...")
         break
